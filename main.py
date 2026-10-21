@@ -43,7 +43,7 @@ async def startup_event():
 
 class RequestData(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
-@app.post("/")
+@app.post("/chat")
 async def chat_endpoint(data: RequestData):
     messages = [{"role": "system", "content": "You are a helpful AI assistant."}]
     

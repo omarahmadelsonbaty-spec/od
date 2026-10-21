@@ -29,6 +29,10 @@
     </footer>
 
     <script>
+      const BACKEND_URL = window.location.hostname === 'localhost' 
+          ? 'http://localhost:8000' 
+          : 'https://aifixed.onrender.com';
+
       const input = document.getElementById("t");
       const box = document.getElementById("chat-box");
       const newchat = document.getElementById("new");
@@ -42,7 +46,7 @@
         input.value = "";
 
         try {
-          await fetch('http://localhost:8000/history', { method: 'DELETE' });
+          await fetch(`${BACKEND_URL}/history`, { method: 'DELETE' });
         } catch (err) {
           console.error("Could not clear history on server:", err);
         }
@@ -67,7 +71,7 @@
           box.scrollTop = box.scrollHeight;
 
           try {
-            const response = await fetch('http://localhost:8000/', {
+            const response = await fetch(`${BACKEND_URL}/chat`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
