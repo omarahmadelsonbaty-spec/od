@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sara's AI Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col items-center p-10">
+
+    <h1 class="text-4xl font-black text-blue-500 mb-2">SARA AI</h1>
+    <p class="text-gray-400 mb-8 italic">I'm Sara, and I built this AI for you.</p>
+
+    <div class="bg-slate-800 px-6 py-2 rounded-full border border-blue-500 mb-6">
+        Credits: <span id="credits" class="font-bold text-blue-400">5</span>
+    </div>
+
+    <div id="chat-box" class="w-full max-w-2xl h-80 bg-slate-800 rounded-xl p-4 overflow-y-auto mb-4 border border-slate-700">
+        <p class="text-slate-500 text-center mt-32">Ask your first question to start...</p>
+    </div>
+
+    <div class="w-full max-w-2xl flex gap-2">
+        <input id="user-msg" type="text" placeholder="Type here..." class="flex-1 p-3 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button onclick="send()" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-bold transition">Send</button>
+    </div>
+
+    <div id="popup" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden">
+        <div class="bg-white text-black p-8 rounded-2xl text-center max-w-sm">
+            <h2 class="text-2xl font-bold mb-4">Out of Credits!</h2>
+            <p class="mb-6">Watch a quick ad to get 5 more messages for free.</p>
+            <button onclick="watchAd()" class="bg-orange-500 text-white w-full py-3 rounded-lg font-bold text-lg animate-bounce">WATCH AD NOW</button>
+        </div>
+    </div>
+
+    <script>
+        async function send() {
+            const input = document.getElementById('user-msg');
+            const box = document.getElementById('chat-box');
+            const msg = input.value;
+            if(!msg) return;
+
+            box.innerHTML += `<div class="mb-4 text-right"><span class="bg-blue-600 p-2 rounded-lg">${msg}</span></div>`;
+            input.value = "";
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg})
+            });
+            const data = await response.json();
+
+            if(data.error) {
+                document.getElementById('popup').classList.remove('hidden');
+            } else {
+                box.innerHTML += `<div class="mb-4"><b>Sara AI:</b> ${data.answer}</div>`;
+                document.getElementById('credits').innerText = data.credits_left;
+            }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function watchAd() {
+            // MONEY TIP: Here you'd redirect to your Ad link!
+            alert("POPUP: Redirecting to sponsor... (Imagine an ad here)");
+            
+            await fetch('/reload_credits', {method: 'POST'});
+            document.getElementById('credits').innerText = "5";
+            document.getElementById('popup').classList.add('hidden');
+            alert("Credits Added!");
+        }
+    </script>
+</body>
+</html>

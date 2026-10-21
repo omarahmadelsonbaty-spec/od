@@ -1,0 +1,16 @@
+.large{
+    display: flex;
+    justify-content: space-between;
+    background-color: aqua;
+    width: 100px;
+    height: 50px;
+}
+.x{
+    background-color: blue;
+}
+.xx{
+    background-color: brown;
+}
+.xxx{
+    background-color: burlywood
+}
