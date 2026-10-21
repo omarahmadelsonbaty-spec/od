@@ -4,6 +4,9 @@ import fastapi
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
