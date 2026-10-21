@@ -17,7 +17,7 @@ client = AsyncOpenAI(
 app = fastapi.FastAPI()
 
 @app.get("/")
-async def read_root():
+def read_root():
     return FileResponse("index.html")
 
 app.add_middleware(
