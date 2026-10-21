@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from fastapi.responses import FileResponse
 
 load_dotenv()
 
@@ -14,6 +15,10 @@ client = AsyncOpenAI(
 )
 
 app = fastapi.FastAPI()
+
+@app.get("/")
+async def read_root():
+    return FileResponse("index.html")
 
 app.add_middleware(
     CORSMiddleware,
