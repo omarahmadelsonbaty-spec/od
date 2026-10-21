@@ -18,7 +18,7 @@ app = fastapi.FastAPI()
 
 @app.get("/")
 def read_root():
-    return FileResponse("index.html")
+    return {"status": "online", "message": "API is running successfully!"}
 
 app.add_middleware(
     CORSMiddleware,
