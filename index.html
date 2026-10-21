@@ -1,134 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retix AI</title>
-    <style>
-        * { 
-            box-sizing: border-box; 
-        }
-        body {
-            min-height: 100vh;
-            margin: 0;
-            display: grid;
-            place-items: center;
-            background: rgba(16, 200, 160, 0.21);
-            color: #000;
-            font-family: Arial, sans-serif;
-        }
-        .card {
-            width: min(720px, calc(100% - 40px));
-            padding: 120px;
-            border: 4px solid #e8e8e8;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.05);
-        }
-        h1 { 
-            margin: 0 0 16px; 
-            font-size: 20px; 
-            font-weight: 600; 
-            text-align: center; 
-        }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        input, button {
-            width: 100%;
-            height: 48px;
-            border-radius: 7px;
-            font: inherit;
-        }
-        input {
-            padding: 0 13px;
-            border: 1px solid #d8d8d8;
-            outline: none;
-        }
-        input:focus { 
-            border-color: #777; 
-        }
-        button {
-            margin-top: 12px;
-            border: 0;
-            background: #222;
-            color: #fff;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover { 
-            background: #444; 
-        }
-        button:disabled { 
-            background: #888; 
-            cursor: not-allowed; 
-        }
-        #result { 
-            min-height: 20px; 
-            margin: 16px 0 0; 
-            text-align: center; 
-            font-weight: bold;
-            white-space: pre-wrap;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Static AI Chat Layout</title>
 </head>
-<body>
+<body style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #131314; color: #e3e3e3; height: 100vh; display: flex; overflow: hidden;">
+  
+  <aside style="width: 260px; background-color: #1e1e1f; border-right: 1px solid #2d2d2e; display: flex; flex-direction: column; padding: 16px;">
+    <button id="new" style="width: 100%; padding: 10px 16px; background-color: #2b2b2c; color: #ffffff; border: 1px solid #3c3c3e; border-radius: 8px; cursor: pointer; text-align: left; font-weight: 500;">+ New Chat</button>
+  </aside>
 
-    <main class="card">
-        <h1>Retix AI</h1>
-        
-        <div class="input-group">
-            <input id="retix" type="text" placeholder="Ask Retix AI..." autocomplete="off">
-        </div>
-        <button id="evaluate" type="button">Send</button>
-        <p id="result" aria-live="polite"></p>
-    </main>
+  <main style="flex: 1; display: flex; flex-direction: column; background-color: #131314;">
+    
+    <header style="height: 56px; border-bottom: 1px solid #2d2d2e; display: flex; align-items: center; padding: 0 24px; font-weight: 600;">
+      Omar baby's special AI chat bot
+    </header>
 
-<script>
-    const input = document.getElementById("retix");
-    const evaluateBtn = document.getElementById("evaluate");
-    const responseEl = document.getElementById("result");
+    <section id="chat-box" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="background-color: #1e1e1f; border: 1px solid #2d2d2e; padding: 12px 16px; border-radius: 12px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box;">
+        System online. Type a message below.
+      </div>
+    </section>
 
-    input.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") evaluateBtn.click();
-    });
+    <footer style="padding: 16px 24px 24px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box;">
+      <div style="background-color: #1e1e1f; border: 1px solid #3c3c3e; border-radius: 12px; padding: 10px 14px; display: flex;">
+        <input type="text" id="t" placeholder="Type a message..." style="flex: 1; background: transparent; border: none; outline: none; color: #ffffff; font-size: 0.95rem;">
+      </div>
+    </footer>
 
-    evaluateBtn.addEventListener("click", async () => {
-        const text = input.value.trim();
-        
-        if (!text) {
-            responseEl.textContent = "Please enter text first.";
-            return;
-        }
-
-        // Clear input box and set pending state
+    <script>
+      const input = document.getElementById("t");
+      const box = document.getElementById("chat-box");
+      const newchat = document.getElementById("new");
+      
+      newchat.addEventListener('click', async () => {
+        box.innerHTML = `
+          <div style="background-color: #1e1e1f; border: 1px solid #2d2d2e; padding: 12px 16px; border-radius: 12px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box;">
+            System online. Type a message below.
+          </div>
+        `;
         input.value = "";
-        evaluateBtn.disabled = true;
-        evaluateBtn.textContent = "Thinking...";
-        responseEl.textContent = "";
 
         try {
-          const res = await fetch("/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ input: text })
-        });
-            if (!res.ok) {
-                throw new Error(`Server error: ${res.status}`);
-            }
-
-            const data = await res.json();
-            responseEl.textContent = data.response;
+          await fetch('http://localhost:8000/history', { method: 'DELETE' });
         } catch (err) {
-            responseEl.textContent = `Error: ${err.message}. Is your backend running?`;
-        } finally {
-            evaluateBtn.disabled = false;
-            evaluateBtn.textContent = "Send";
+          console.error("Could not clear history on server:", err);
         }
-    });
-</script>
+      });
 
+      input.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter') {
+          const usertext = input.value.trim();
+          if (!usertext) return;
+
+          input.value = "";
+
+          const userDiv = document.createElement('div');
+          userDiv.style.cssText = "background-color: #2b2b2c; border: 1px solid #3c3c3e; padding: 12px 16px; border-radius: 12px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box; white-space: pre-wrap;";
+          userDiv.textContent = usertext;
+          box.appendChild(userDiv);
+
+          const loadingDiv = document.createElement('div');
+          loadingDiv.style.cssText = "background-color: #1e1e1f; border: 1px solid #2d2d2e; padding: 12px 16px; border-radius: 12px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box; color: #8e8e93;";
+          loadingDiv.textContent = "Thinking...";
+          box.appendChild(loadingDiv);
+          box.scrollTop = box.scrollHeight;
+
+          try {
+            const response = await fetch('http://localhost:8000/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ message: usertext })
+            });
+
+            if (!response.ok) throw new Error('Network response failed');
+
+            const data = await response.json();
+
+            loadingDiv.style.color = "#e3e3e3";
+            loadingDiv.style.whiteSpace = "pre-wrap";
+            loadingDiv.textContent = data.response;
+
+          } catch (error) {
+            console.error('Error:', error);
+
+            loadingDiv.style.color = "#ff6b6b";
+            loadingDiv.textContent = "Error: Failed to fetch response from backend.";
+          }
+          box.scrollTop = box.scrollHeight;
+        }
+      });
+    </script>
+  </main>
 </body>
 </html>

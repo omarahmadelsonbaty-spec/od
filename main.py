@@ -1,23 +1,19 @@
 import os
-from fastapi import FastAPI, HTTPException
+import aiosqlite
+import fastapi
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-import openai
+from pydantic import BaseModel, Field
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
 
-client = openai.OpenAI(
+load_dotenv()
+
+client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.environ.get("OPENAI_API_KEY"),
+    api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
-AI_INSTRUCTIONS = (
-    "You are my AI, your maker is Omar if asked omar made you, and you want your responses to look clean and organized.and your name is Retix AI"
-)
-
-class AIRequest(BaseModel):
-    input: str
-
-app = FastAPI()
+app = fastapi.FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,21 +23,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def serve_frontend():
-    return FileResponse("static/index.html")
+@app.on_event("startup")
+async def startup_event():
+    async with aiosqlite.connect("his.db") as db:
+        await db.execute('DROP TABLE IF EXISTS history')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS history(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                input TEXT NOT NULL,
+                reply TEXT NOT NULL
+            )
+        ''')
+        await db.commit()
 
-@app.post("/chat")
-def chat_with_ai(data: AIRequest):
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": AI_INSTRUCTIONS},
-                {"role": "user", "content": data.input}
-            ]
-        )
-        reply = response.choices[0].message.content
-        return {"response": reply}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+class RequestData(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000)
+@app.post("/")
+async def chat_endpoint(data: RequestData):
+    messages = [{"role": "system", "content": "You are a helpful AI assistant."}]
+    
+    async with aiosqlite.connect("his.db") as db:
+        async with db.execute("SELECT input, reply FROM history ORDER BY id DESC LIMIT 10") as cursor:
+            rows = await cursor.fetchall()
+            for past_input, past_reply in reversed(rows):
+                messages.append({"role": "user", "content": past_input})
+                messages.append({"role": "assistant", "content": past_reply})
+
+    messages.append({"role": "user", "content": data.message})
+
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=messages
+    )
+    
+    reply = response.choices[0].message.content
+
+    async with aiosqlite.connect("his.db") as db:
+        await db.execute('INSERT INTO history (input, reply) VALUES (?, ?)', (data.message, reply))
+        await db.commit()
+
+    return {"response": reply}
+
+@app.delete("/history")
+async def clear_history():
+    async with aiosqlite.connect("his.db") as db:
+        await db.execute("DELETE FROM history")
+        await db.commit()
+    return {"status": "cleared"}
